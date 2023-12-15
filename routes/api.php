@@ -20,8 +20,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 //括號內左邊是網址api/'uri'
-Route::get('events', [EventController::class, 'index']);
-Route::post('events', [EventController::class, 'store']);
-Route::get('events/{id}', [EventController::class, 'show']);
-Route::put('events/{id}', [EventController::class, 'update']);
-Route::delete('events/{id}', [EventController::class, 'delete']);
+//可用group/prefix簡化
+Route::group(['prefix' => 'events'], function() {
+    Route::get('/', [EventController::class, 'index']);
+    Route::post('/', [EventController::class, 'store']);
+    Route::get('/{id}', [EventController::class, 'show']);
+    Route::put('{id}', [EventController::class, 'update']);
+    Route::delete('/{id}', [EventController::class, 'delete']);
+});
