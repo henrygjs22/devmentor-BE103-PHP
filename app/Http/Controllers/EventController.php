@@ -10,9 +10,8 @@ class EventController extends Controller
 {
     public function index()
     {
-        $events = Event::all(); //生成Colletion物件 
-        // return $events;
-        return response()->json($events->all()); //Colletion的方法
+        $events = Event::all(); //Create collection object
+        return response()->json($events->all()); //Method of collection
     }
 
     public function store(Request $request)
@@ -49,6 +48,6 @@ class EventController extends Controller
             return response()->json(['message' => 'Event not found'], 404);
         }
         $event->delete();
-        return response()->json(['status' => 'deleted']);
+        return response()->json(['status' => 'OK']);
     }
 }
