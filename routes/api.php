@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //括號內左邊是網址api/'uri'
 //可用group/prefix簡化
 Route::group(['prefix' => 'events'], function() {
+    Route::get('/test', [EventController::class, 'indexN1']);
     Route::get('/', [EventController::class, 'index']);
     Route::post('/', [EventController::class, 'store']);
     Route::get('/{id}', [EventController::class, 'show']);

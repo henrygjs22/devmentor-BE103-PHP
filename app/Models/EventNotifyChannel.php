@@ -5,12 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Event extends Model
+class EventNotifyChannel extends Model
 {
+    use HasFactory;
+
+    public $table = 'event_notify_channel';
     protected $guarded = [];
-    
-    public function eventNotifyChannels()
-    {
-        return $this->hasMany(EventNotifyChannel::class, 'event_id');
-    }
+    public $timestamps = false;
 }
