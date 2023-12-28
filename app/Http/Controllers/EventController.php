@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\EventNotifyChannel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PostEventRequest;
+use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
@@ -64,19 +65,29 @@ class EventController extends Controller
 
     public function store(PostEventRequest $request)
     {
-        $event = Event::create([
-            'name' => $request->name,
-            'trigger_time' => $request->trigger_time,
-        ]);
+        try {
+            DB::beginTransaction();
 
-        foreach ($request->notify_channel_ids as $notifyChannelId) {
-            EventNotifyChannel::create([
-                'event_id' => $event->id,
-                'notify_channel_id' => $notifyChannelId,
-                'message_json' => json_encode($request->messages),
+            $event = Event::create([
+                'name' => $request->name,
+                'trigger_time' => $request->trigger_time,
             ]);
-        }  
-        return response()->json(['status' => 'OK']);
+    
+            foreach ($request->notify_channel_ids as $notifyChannelId) {
+                EventNotifyChannel::create([
+                    'event_id' => $event->id,
+                    'notify_channel_id' => $notifyChannelId,
+                    'message_json' => json_encode($request->messages),
+                ]);
+            }    
+            DB::commit();   
+            return response()->json(['status' => 'OK']);
+        } 
+        catch (\Exception $e) {
+            report($e);           
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to create event'], 500);
+        }
     }
 
     public function show(string $id)
@@ -104,23 +115,37 @@ class EventController extends Controller
 
     public function update(string $id, PostEventRequest $request)
     {
-        $event = Event::find($id);
-        if (!$event) {
-            return response()->json(['message' => 'Event not found'], 404);
+        try {
+            DB::beginTransaction();
+   
+            $event = Event::find($id);
+            if (!$event) {
+                DB::rollBack(); 
+                return response()->json(['message' => 'Event not found'], 404);
+            }
+            
+            $data = $request->only(['name', 'trigger_time']);
+            $event->fill($data)->save();
+    
+            EventNotifyChannel::where('event_id', $event->id)->delete();
+    
+            foreach ($request->notify_channel_ids as $notifyChannelId) {
+                EventNotifyChannel::create([
+                    'event_id' => $event->id,
+                    'notify_channel_id' => $notifyChannelId,
+                    'message_json' => json_encode($request->messages),
+                ]);
+            }
+    
+            DB::commit();
+    
+            return response()->json(['status' => 'OK']);
+        } 
+        catch (\Exception $e) {
+            report($e);   
+            DB::rollBack(); // Rollback in case of an exception
+            return response()->json(['error' => 'Failed to update event'], 500);
         }
-        $data = $request->only(['name', 'trigger_time']);
-        $event->fill($data)->save();
-
-        EventNotifyChannel::where('event_id', $event->id)->delete();
-        foreach ($request->notify_channel_ids as $notifyChannelId)  {           
-            $data = $request->only(['notify_channel_ids', 'messages']);
-            EventNotifyChannel::create([
-                'event_id' => $event->id,
-                'notify_channel_id' => $notifyChannelId,
-                'message_json' => json_encode($request->messages),
-            ]);
-        }
-        return response()->json(['status' => 'OK']);
     }
 
     public function delete(string $id)
