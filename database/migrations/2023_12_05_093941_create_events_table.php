@@ -17,6 +17,7 @@ return new class extends Migration
         Schema::create('events', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->foreignId('user_id')->constrained('users')->after('id');
             $table->dateTimeTz('trigger_time');
             $table->timestamps();
         });

@@ -41,7 +41,9 @@ class EventController extends Controller
         // query builder
         $events = Event::with('eventNotifyChannels')
             ->select('events.id', 'events.name', 'trigger_time')
-            ->get();
+            ->get()
+            ->paginate(2);
+        // $events = Event::all();
         // dd($events);
         $response = [];
         foreach ($events as $event) {
@@ -67,10 +69,11 @@ class EventController extends Controller
     {
         try {
             DB::beginTransaction();
-
+            $user = auth()->user();
             $event = Event::create([
                 'name' => $request->name,
                 'trigger_time' => $request->trigger_time,
+                'user_id' => $user->id,
             ]);
     
             foreach ($request->notify_channel_ids as $notifyChannelId) {
@@ -116,12 +119,18 @@ class EventController extends Controller
     public function update(string $id, PostEventRequest $request)
     {
         try {
-            DB::beginTransaction();
-   
+            DB::beginTransaction();   
+            
             $event = Event::find($id);
             if (!$event) {
                 DB::rollBack(); 
                 return response()->json(['message' => 'Event not found'], 404);
+            }
+            
+            $user = auth()->user();
+            if ($event->user_id !== $user->id) {
+                DB::rollBack();
+                return response()->json(['message' => 'Unauthorized'], 403);
             }
             
             $data = $request->only(['name', 'trigger_time']);
@@ -153,7 +162,12 @@ class EventController extends Controller
         $event = Event::find($id);
         if (!$event) {
             return response()->json(['message' => 'Event not found'], 404);
-        }       
+        }
+        $user = auth()->user();
+            if ($event->user_id !== $user->id) {
+                DB::rollBack();
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }       
         // Must delete model with foreign key first
         EventNotifyChannel::where('event_id', $event->id)->delete();
         $event->delete();
