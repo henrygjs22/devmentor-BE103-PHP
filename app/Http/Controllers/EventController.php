@@ -41,7 +41,8 @@ class EventController extends Controller
         // query builder
         $events = Event::with('eventNotifyChannels')
             ->select('events.id', 'events.name', 'trigger_time')
-            ->get();
+            ->paginate(2);
+        // $events = Event::all();
         // dd($events);
         $response = [];
         foreach ($events as $event) {
@@ -49,7 +50,7 @@ class EventController extends Controller
             // SELECT * FROM event_notify_channel WHERE event_id = 1
             foreach ($event->eventNotifyChannels as $eventNotifyChannel) { 
                 $notifyChannels[] = [
-                    'id' => $eventNotifyChannel->id,
+                    'id' => $eventNotifyChannel->notify_channel_id,
                     'messages' => json_decode($eventNotifyChannel->message_json, true),
                 ];
             }
@@ -67,10 +68,11 @@ class EventController extends Controller
     {
         try {
             DB::beginTransaction();
-
+            $user = auth()->user();
             $event = Event::create([
                 'name' => $request->name,
                 'trigger_time' => $request->trigger_time,
+                'user_id' => $user->id,
             ]);
     
             foreach ($request->notify_channel_ids as $notifyChannelId) {
@@ -116,13 +118,21 @@ class EventController extends Controller
     public function update(string $id, PostEventRequest $request)
     {
         try {
-            DB::beginTransaction();
-   
-            $event = Event::find($id);
+            DB::beginTransaction();   
+            
+            $user = auth()->user();
+            // $event = Event::find($id);
+            $event = Event::where('id', $id)->where('user_id', $user->id);
+            
             if (!$event) {
                 DB::rollBack(); 
-                return response()->json(['message' => 'Event not found'], 404);
+                return response()->json(['message' => 'Update failed'], 404);
             }
+            
+            // if ($event->user_id !== $user->id) {
+            //     DB::rollBack();
+            //     return response()->json(['message' => 'Unauthorized'], 403);
+            // }
             
             $data = $request->only(['name', 'trigger_time']);
             $event->fill($data)->save();
@@ -149,14 +159,21 @@ class EventController extends Controller
     }
 
     public function delete(string $id)
-    {
-        $event = Event::find($id);
+    {                
+        $user = auth()->user();
+        $event = Event::where('id', $id)->where('user_id', $user->id);       
         if (!$event) {
-            return response()->json(['message' => 'Event not found'], 404);
-        }       
+            return response()->json(['message' => 'Delete failed'], 404);
+        }
+        
+        // if ($event->user_id !== $user->id) {
+        //     DB::rollBack();
+        //     return response()->json(['message' => 'Unauthorized'], 403);
+        // }
+                
         // Must delete model with foreign key first
         EventNotifyChannel::where('event_id', $event->id)->delete();
         $event->delete();
-        return response()->json(['status' => 'OK']);
+        return response()->json(['status' => 'OK']);       
     }
 }
