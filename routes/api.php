@@ -20,7 +20,6 @@ use App\Http\Controllers\EventController;
 // 可用group/prefix簡化
 // Public routes
 Route::group(['prefix' => 'events'], function() {
-    Route::get('test', [EventController::class, 'indexN1']);
     Route::get('/', [EventController::class, 'index']);
     Route::get('{id}', [EventController::class, 'show']);
 });
