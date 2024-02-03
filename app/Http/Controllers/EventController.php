@@ -19,7 +19,6 @@ class EventController extends Controller
         $response = [];
         foreach ($events as $event) {
             $notifyChannels = [];
-            // SELECT * FROM event_notify_channel WHERE event_id = 1
             foreach ($event->eventNotifyChannels as $eventNotifyChannel) {
                 $notifyChannels[] = [
                     'id' => $eventNotifyChannel->notify_channel_id,
