@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use App\Models\EventNotifyChannel;
@@ -53,7 +52,7 @@ class EventController extends Controller
         }
     }
 
-    public function show(EventService $eventService, string $eventId)
+    public function show(EventService $eventService, int $eventId)
     {
         $event = $eventService->getEvent($eventId);
         $response = [];
@@ -73,7 +72,7 @@ class EventController extends Controller
         return response()->json($response);
     }
 
-    public function update(string $eventId, PostEventRequest $request)
+    public function update(int $eventId, PostEventRequest $request)
     {
         /** @var EventService $eventService */    
         $eventService = app(EventService::class);
@@ -90,7 +89,7 @@ class EventController extends Controller
         }
     }
 
-    public function delete(string $eventId)
+    public function delete(int $eventId)
     {                
         /** @var EventService $eventService */    
         $eventService = app(EventService::class);
@@ -105,5 +104,22 @@ class EventController extends Controller
             DB::rollBack();
             return response()->json(['error' => 'Failed to delete event'], 500);
         }   
+    }
+
+    public function subscribe(int $eventId)
+    {
+        $event = Event::find($eventId);
+        if (!$event) {
+            return response()->json(['message' => 'Event not found'], 404);
+        }
+
+        $user = auth()->user();
+
+        EventUser::create([
+            'event_id' => $eventId,
+            'user_id' => $user->id,
+        ]);
+
+        return response()->json(['status' => 'OK']);
     }
 }

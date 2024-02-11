@@ -32,10 +32,12 @@ Route::group(['middleware' => 'auth:sanctum', 'prefix' => 'events'], function() 
     Route::post('/', [EventController::class, 'store']);
     Route::put('{id}', [EventController::class, 'update']);
     Route::delete('{id}', [EventController::class, 'delete']);
+    Route::post('/subscribe/{eventId}', [EventController::class, 'subscribe']);
 });
 Route::middleware('auth:sanctum')->post('logout', [AuthController::class, 'logout']);
 
 Route::group(['middleware' => 'auth:sanctum', 'prefix' => 'events/dispatch'], function() {
-    Route::post('/line', [EventDispatchController::class, 'lineNotify']);
-    Route::post('/email', [EventDispatchController::class, 'emailNotify']);
+    Route::post('/line/{eventId}', [EventDispatchController::class, 'lineNotify']);
+    Route::post('/email/{eventId}', [EventDispatchController::class, 'emailNotify']);
+    Route::post('/telegram/{eventId}', [EventDispatchController::class, 'telegramNotify']);
 });
