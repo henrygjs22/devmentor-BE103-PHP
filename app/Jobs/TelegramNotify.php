@@ -33,7 +33,7 @@ class TelegramNotify implements ShouldQueue
      */
     public function handle(): void
     {
-        $telegramUserId = '6176808259';
+        $telegramUserId = $this->user->telegram_id;
         $messages = json_decode($this->eventNotifyChannel->message_json, true);
         $message = $messages[$this->user->language->code];
         
