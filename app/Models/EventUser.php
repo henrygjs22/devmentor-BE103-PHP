@@ -11,4 +11,9 @@ class EventUser extends Model
 
     public $table = 'event_user';
     protected $guarded = [];
+
+    public function subscribeUser()
+    {
+        return $this->hasOne(User::class, 'id', 'user_id');
+    }
 }
