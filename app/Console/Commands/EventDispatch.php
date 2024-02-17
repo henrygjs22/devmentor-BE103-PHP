@@ -38,22 +38,24 @@ class EventDispatch extends Command
                 $user = $subscription->subscribeUser;
                 $eventNotifyChannels = $event->eventNotifyChannels;
                 foreach ($eventNotifyChannels as $eventNotifyChannel) {
-                    $id = $eventNotifyChannel->notify_channel_id;
-                    if ($id === EventNotifyChannel::EMAIL) {
-                        EmailNotify::dispatchSync($eventNotifyChannel, $user);
-                        $this->info('Email dispatched successfully');      
-                        return 0;
-                    } else if ($id === EventNotifyChannel::LINE) {
-                        LineNotify::dispatchSync($eventNotifyChannel, $user);
-                        $this->info('LINE dispatched successfully');      
-                        return 0;
-                    } else if ($id === EventNotifyChannel::TELEGRAM) {
-                        TelegramNotify::dispatchSync($eventNotifyChannel, $user);
-                        $this->info('LINE dispatched successfully');      
-                        return 0;
-                    }
+                    $this->dispatchNotification($eventNotifyChannel, $user);
                 }               
             }
         }       
+    }
+
+    private function dispatchNotification($eventNotifyChannel, $user)
+    {
+        switch ($eventNotifyChannel->notify_channel_id) {
+            case EventNotifyChannel::EMAIL:
+                EmailNotify::dispatchSync($eventNotifyChannel, $user);
+                break;
+            case EventNotifyChannel::LINE:
+                LineNotify::dispatchSync($eventNotifyChannel, $user);
+                break;
+            case EventNotifyChannel::TELEGRAM:
+                TelegramNotify::dispatchSync($eventNotifyChannel, $user);
+                break;
+        }
     }
 }
