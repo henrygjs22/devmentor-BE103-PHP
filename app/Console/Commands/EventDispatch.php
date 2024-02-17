@@ -2,8 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Event;
 use App\Jobs\LineNotify;
+use App\Jobs\EmailNotify;
 use App\Models\EventUser;
+use App\Jobs\TelegramNotify;
 use Illuminate\Console\Command;
 use App\Models\EventNotifyChannel;
 
@@ -28,15 +31,29 @@ class EventDispatch extends Command
      */
     public function handle()
     {
-        $user = EventUser::find(1)->subscribeUser()->first();
-        
-        $eventNotifyChannel = EventNotifyChannel::query()
-            ->where('event_id', 4)
-            ->where('notify_channel_id', EventNotifyChannel::LINE)
-            ->first();
-
-        LineNotify::dispatchSync($eventNotifyChannel, $user);
-
-        return response()->json(['message' => 'Line Notify sent']);
+        $events = Event::where('trigger_time', '<=', now())->get();
+        foreach ($events as $event) {
+            $subscriptions = EventUser::where('event_id', $event->id)->get();
+            foreach ($subscriptions as $subscription) {
+                $user = $subscription->subscribeUser;
+                $eventNotifyChannels = $event->eventNotifyChannels;
+                foreach ($eventNotifyChannels as $eventNotifyChannel) {
+                    $id = $eventNotifyChannel->notify_channel_id;
+                    if ($id === EventNotifyChannel::EMAIL) {
+                        EmailNotify::dispatchSync($eventNotifyChannel, $user);
+                        $this->info('Email dispatched successfully');      
+                        return 0;
+                    } else if ($id === EventNotifyChannel::LINE) {
+                        LineNotify::dispatchSync($eventNotifyChannel, $user);
+                        $this->info('LINE dispatched successfully');      
+                        return 0;
+                    } else if ($id === EventNotifyChannel::TELEGRAM) {
+                        TelegramNotify::dispatchSync($eventNotifyChannel, $user);
+                        $this->info('LINE dispatched successfully');      
+                        return 0;
+                    }
+                }               
+            }
+        }       
     }
 }
