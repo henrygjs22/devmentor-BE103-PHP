@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\EventUser;
 use Illuminate\Http\Request;
 use App\Models\EventNotifyChannel;
 use Illuminate\Support\Facades\DB;
@@ -112,14 +113,11 @@ class EventController extends Controller
         if (!$event) {
             return response()->json(['message' => 'Event not found'], 404);
         }
-
         $user = auth()->user();
-
         EventUser::create([
             'event_id' => $eventId,
             'user_id' => $user->id,
         ]);
-
         return response()->json(['status' => 'OK']);
     }
 }
