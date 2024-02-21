@@ -37,7 +37,7 @@ DB_OASSWIRD=db_password
 3. Apply current migrations to local db by using: sail artisan migrate
 
 # API documentation
-Here is the [API documentation]() for this project.
+Here is the [API documentation](https://documenter.getpostman.com/view/31610974/2s9Yyweezk) for this project.
 
 # System Design
 [System Design](public/images/system_design.png)
